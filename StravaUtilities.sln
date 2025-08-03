@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34322.80
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StravaApiClient", "src\StravaApiClient\StravaApiClient.csproj", "{3989418E-3875-4909-9628-6AB1AD71F5E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StravaUtilities.ApiClient", "src\ApiClient\StravaUtilities.ApiClient.csproj", "{3989418E-3875-4909-9628-6AB1AD71F5E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models", "src\Models\Models.csproj", "{514A51AF-E9FB-4ED6-B47C-02E90A3CE8E3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StravaUtilities.Models", "src\Models\StravaUtilities.Models.csproj", "{514A51AF-E9FB-4ED6-B47C-02E90A3CE8E3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
