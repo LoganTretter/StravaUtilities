@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-namespace StravaApi;
+namespace StravaUtilities.Models;
 
 public class Bike : Gear
 {

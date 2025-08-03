@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace StravaApi;
+namespace StravaUtilities.Models;
 
 public class Activity
 {
@@ -244,8 +244,6 @@ public enum WorkoutType
 {
     RunWorkout = 3
 }
-
-public record LatitudeLongitude (decimal Latitude, decimal Longitude);
 
 public class ActivityUpdateInfo
 {

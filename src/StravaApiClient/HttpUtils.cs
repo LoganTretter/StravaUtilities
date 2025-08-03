@@ -1,10 +1,10 @@
 ﻿using Polly;
 using Polly.Extensions.Http;
+using StravaUtilities.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Web.Http;
 
-namespace StravaApi;
+namespace StravaUtilities.ApiClient;
 
 internal static class HttpUtils
 {
@@ -26,7 +26,7 @@ internal static class HttpUtils
         }
         catch (HttpRequestException ex)
         {
-            throw new StravaApiException(ex.Message, ex);
+            throw new StravaUtilitiesException(ex.Message, ex);
         }
     }
 
@@ -43,7 +43,7 @@ internal static class HttpUtils
         catch (HttpRequestException ex)
         {
             // TODO could it get the full request uri into this message?
-            throw new StravaApiException(ex.Message, ex);
+            throw new StravaUtilitiesException(ex.Message, ex);
         }
     }
 
@@ -59,7 +59,7 @@ internal static class HttpUtils
         }
         catch (HttpRequestException ex)
         {
-            throw new StravaApiException(ex.Message, ex);
+            throw new StravaUtilitiesException(ex.Message, ex);
         }
     }
 
@@ -74,7 +74,7 @@ internal static class HttpUtils
         }
         catch (HttpRequestException ex)
         {
-            throw new StravaApiException(ex.Message, ex);
+            throw new StravaUtilitiesException(ex.Message, ex);
         }
     }
 
@@ -85,7 +85,7 @@ internal static class HttpUtils
         var responseString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         if (string.IsNullOrEmpty(responseString))
-            throw new StravaApiException($"Problem reading Strava API call response for path: '{pathUsed}'. Status is {(int)response.StatusCode} {response.StatusCode} but response content was empty.");
+            throw new StravaUtilitiesException($"Problem reading Strava API call response for path: '{pathUsed}'. Status is {(int)response.StatusCode} {response.StatusCode} but response content was empty.");
 
         try
         {
@@ -96,7 +96,7 @@ internal static class HttpUtils
         }
         catch (Exception ex)
         {
-            throw new StravaApiException($"Problem deserializing Strava API call response for path: '{pathUsed}' - {ex.Message}", ex);
+            throw new StravaUtilitiesException($"Problem deserializing Strava API call response {ex.Message}. Path used: '{pathUsed}'. Response: '{responseString}.", ex);
         }
     }
 
@@ -104,16 +104,12 @@ internal static class HttpUtils
     {
         if (response.IsSuccessStatusCode)
             return;
-        
-        var error = await response.Content.ReadAsAsync<HttpError>().ConfigureAwait(false);
-        string message = $"{(int)response.StatusCode} {response.StatusCode} error in Strava API call for path: '{pathUsed}'";
-        if (!string.IsNullOrEmpty(error.Message))
-            message += $"{Environment.NewLine}{nameof(HttpError.Message)}: {error.Message}";
-        if (!string.IsNullOrEmpty(error.MessageDetail))
-            message += $"{Environment.NewLine}{nameof(HttpError.MessageDetail)}: {error.MessageDetail}";
-        if (!string.IsNullOrEmpty(error.ExceptionMessage))
-            message += $"{Environment.NewLine}{nameof(HttpError.ExceptionMessage)}: {error.ExceptionMessage}";
 
-        throw new StravaApiException(message);
+        var responseString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        var message = $"{(int)response.StatusCode} {response.StatusCode} error in Strava API call for path: '{pathUsed}'";
+        message += $"{Environment.NewLine}Details: {responseString}";
+
+        throw new StravaUtilitiesException(message);
     }
 }

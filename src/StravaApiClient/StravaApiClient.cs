@@ -1,8 +1,8 @@
-﻿namespace StravaApi;
+﻿namespace StravaUtilities.ApiClient;
 
 /// <summary>
 /// 
-/// </summary>
+/// </summary>`
 public partial class StravaApiClient
 {
     private const string BaseUrl = "https://www.strava.com";
