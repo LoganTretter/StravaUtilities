@@ -1,8 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
-using StravaUtilities.Models;
 
-namespace StravaUtilities.ApiClient;
+namespace StravaApi;
 public partial class StravaApiClient
 {
     // TODO - a callback for updating a status indicator?
@@ -100,7 +99,7 @@ public partial class StravaApiClient
         }
         catch (Exception ex)
         {
-            throw new StravaUtilitiesException($"Activity upload error:{Environment.NewLine}{ex.Message}", ex);
+            throw new StravaApiException($"Activity upload error:{Environment.NewLine}{ex.Message}", ex);
         }
     }
 
@@ -112,7 +111,7 @@ public partial class StravaApiClient
         }
         catch (Exception ex)
         {
-            throw new StravaUtilitiesException($"Error checking upload status for upload id {uploadId}:{Environment.NewLine}{ex.Message}", ex);
+            throw new StravaApiException($"Error checking upload status for upload id {uploadId}:{Environment.NewLine}{ex.Message}", ex);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace StravaUtilities.Models;
+namespace StravaApi;
 
 public class PolylineMap
 {

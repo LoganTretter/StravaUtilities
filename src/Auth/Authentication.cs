@@ -1,7 +1,6 @@
 ﻿using System.Net.Http.Headers;
-using StravaUtilities.Models;
 
-namespace StravaUtilities.ApiClient;
+namespace StravaApi;
 
 public partial class StravaApiClient
 {
@@ -30,7 +29,7 @@ public partial class StravaApiClient
     /// <param name="clientSecret"></param>
     /// <returns>The token that was validated. May be new if the one provided was expired.</returns>
     /// <exception cref="ArgumentException">If <see cref="StravaApiToken.AccessToken"/> is null or empty. Or if <paramref name="clientId"/> or <paramref name="clientSecret"/> is provided but not both.</exception>
-    /// <exception cref="StravaUtilitiesException">If authentication to Strava fails.</exception>
+    /// <exception cref="StravaApiException">If authentication to Strava fails.</exception>
     public async Task<StravaApiToken> Authenticate(StravaApiToken token, string clientId = null, string clientSecret = null)
     {
         if (token == null)
@@ -54,7 +53,7 @@ public partial class StravaApiClient
         }
 
         if (string.IsNullOrEmpty(tokenToUse.AccessToken))
-            throw new StravaUtilitiesException("tokenToUse.AccessToken is null when trying to authenticate.");
+            throw new StravaApiException("tokenToUse.AccessToken is null when trying to authenticate.");
 
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenToUse.AccessToken);
 
@@ -70,14 +69,14 @@ public partial class StravaApiClient
 
         if (CurrentAuthenticatedAthlete == null)
         {
-            throw new StravaUtilitiesException("Could not authenticate with the provided token.");
+            throw new StravaApiException("Could not authenticate with the provided token.");
         }
     }
 
     private async Task CheckAuthenticationAndRefreshIfNeeded()
     {
         if (Token == null)
-            throw new StravaUtilitiesException("No successful authentication is added.");
+            throw new StravaApiException("No successful authentication is added.");
         
         if (Token.AccessTokenExpiration == null || Token.AccessTokenExpiration > DateTimeOffset.UtcNow.AddMinutes(1))
             return;
@@ -94,10 +93,10 @@ public partial class StravaApiClient
     private async Task<StravaApiToken> TryGetNewTokenFromRefresh(StravaApiToken token)
     {
         if (string.IsNullOrEmpty(_clientId) || string.IsNullOrEmpty(_clientSecret))
-            throw new StravaUtilitiesException("Authentication is expired and ClientId or ClientSecret is not present to try refresh.");
+            throw new StravaApiException("Authentication is expired and ClientId or ClientSecret is not present to try refresh.");
 
         if (string.IsNullOrEmpty(token.RefreshToken))
-            throw new StravaUtilitiesException("Authentication is expired and no refresh token is present to try refresh.");
+            throw new StravaApiException("Authentication is expired and no refresh token is present to try refresh.");
 
         return await GetRefreshToken(token.RefreshToken, _clientId, _clientSecret).ConfigureAwait(false);
     }
@@ -119,11 +118,11 @@ public partial class StravaApiClient
         var authResponse = await _authHttpClient.Post<StravaAuthResponse>(TokenPath, dictFormUrlEncoded).ConfigureAwait(false);
         
         if (string.IsNullOrEmpty(authResponse.AccessToken))
-            throw new StravaUtilitiesException($"Auth call succeeded but response {nameof(StravaAuthResponse.AccessToken)} was null or empty");
+            throw new StravaApiException($"Auth call succeeded but response {nameof(StravaAuthResponse.AccessToken)} was null or empty");
         if (string.IsNullOrEmpty(authResponse.RefreshToken))
-            throw new StravaUtilitiesException($"Auth call succeeded but response {nameof(StravaAuthResponse.RefreshToken)} was null or empty");
+            throw new StravaApiException($"Auth call succeeded but response {nameof(StravaAuthResponse.RefreshToken)} was null or empty");
         if (authResponse.ExpiresAtSecondsSinceEpoch <= 0)
-            throw new StravaUtilitiesException($"Auth call succeeded but response {nameof(StravaAuthResponse.ExpiresAtSecondsSinceEpoch)} was not greater than 0");
+            throw new StravaApiException($"Auth call succeeded but response {nameof(StravaAuthResponse.ExpiresAtSecondsSinceEpoch)} was not greater than 0");
 
         var newToken = new StravaApiToken()
         {

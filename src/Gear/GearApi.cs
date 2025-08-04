@@ -1,6 +1,4 @@
-﻿using StravaUtilities.Models;
-
-namespace StravaUtilities.ApiClient;
+﻿namespace StravaApi;
 
 public partial class StravaApiClient
 {

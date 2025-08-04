@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace StravaUtilities.ApiClient;
+namespace StravaApi;
 
 public class StravaAuthResponse
 {

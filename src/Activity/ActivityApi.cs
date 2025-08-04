@@ -1,7 +1,6 @@
 ﻿using System.Net.Http.Headers;
-using StravaUtilities.Models;
 
-namespace StravaUtilities.ApiClient;
+namespace StravaApi;
 
 public partial class StravaApiClient
 {
@@ -12,25 +11,25 @@ public partial class StravaApiClient
         try
         {
             var activity = await _httpClient.Get<Activity>($"activities/{activityId}").ConfigureAwait(false);
-            if (activity == null) { throw new StravaUtilitiesException("Activity call succeeded but result is null."); }
+            if (activity == null) { throw new StravaApiException("Activity call succeeded but result is null."); }
             return activity;
         }
         catch (Exception ex)
         {
-            throw new StravaUtilitiesException($"Error getting activity by id {activityId}:{Environment.NewLine}{ex.Message}", ex);
+            throw new StravaApiException($"Error getting activity by id {activityId}:{Environment.NewLine}{ex.Message}", ex);
         }
     }
 
     public async Task<List<Activity>> GetActivities(int pageSize = 200, int pageNumber = 1)
     {
         if (pageSize > 200)
-            throw new StravaUtilitiesException($"Max {nameof(pageSize)} is 200, received {pageSize}. The default is 200.");
+            throw new StravaApiException($"Max {nameof(pageSize)} is 200, received {pageSize}. The default is 200.");
 
         if (pageSize < 1)
-            throw new StravaUtilitiesException($"{nameof(pageSize)} must be >= 1. The default is 200.");
+            throw new StravaApiException($"{nameof(pageSize)} must be >= 1. The default is 200.");
 
         if (pageNumber < 1)
-            throw new StravaUtilitiesException($"{nameof(pageNumber)} must be >= 1. The first page is # 1.");
+            throw new StravaApiException($"{nameof(pageNumber)} must be >= 1. The first page is # 1.");
 
         await CheckAuthenticationAndRefreshIfNeeded().ConfigureAwait(false);
 
@@ -38,12 +37,12 @@ public partial class StravaApiClient
         {
             var activities = await _httpClient.Get<List<Activity>>($"activities?per_page={pageSize}&page={pageNumber}").ConfigureAwait(false);
 
-            if (activities == null) { throw new StravaUtilitiesException("Activity call succeeded but result is null."); }
+            if (activities == null) { throw new StravaApiException("Activity call succeeded but result is null."); }
             return activities;
         }
         catch (Exception ex)
         {
-            throw new StravaUtilitiesException($"Error getting activities:{Environment.NewLine}{ex.Message}", ex);
+            throw new StravaApiException($"Error getting activities:{Environment.NewLine}{ex.Message}", ex);
         }
     }
 
@@ -86,7 +85,7 @@ public partial class StravaApiClient
         }
         catch (Exception ex)
         {
-            throw new StravaUtilitiesException($"Activity update error:{Environment.NewLine}{ex.Message}", ex);
+            throw new StravaApiException($"Activity update error:{Environment.NewLine}{ex.Message}", ex);
         }
     }
 
@@ -100,7 +99,7 @@ public partial class StravaApiClient
         }
         catch (Exception ex)
         {
-            throw new StravaUtilitiesException($"Error deleting activity by id {activityId}:{Environment.NewLine}{ex.Message}", ex);
+            throw new StravaApiException($"Error deleting activity by id {activityId}:{Environment.NewLine}{ex.Message}", ex);
         }
     }
 }

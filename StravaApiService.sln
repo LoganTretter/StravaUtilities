@@ -3,9 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34322.80
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StravaApiClient", "src\StravaApiClient\StravaApiClient.csproj", "{3989418E-3875-4909-9628-6AB1AD71F5E8}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models", "src\Models\Models.csproj", "{514A51AF-E9FB-4ED6-B47C-02E90A3CE8E3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StravaApiService", "src\StravaApiService.csproj", "{3989418E-3875-4909-9628-6AB1AD71F5E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +15,6 @@ Global
 		{3989418E-3875-4909-9628-6AB1AD71F5E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3989418E-3875-4909-9628-6AB1AD71F5E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3989418E-3875-4909-9628-6AB1AD71F5E8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{514A51AF-E9FB-4ED6-B47C-02E90A3CE8E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{514A51AF-E9FB-4ED6-B47C-02E90A3CE8E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{514A51AF-E9FB-4ED6-B47C-02E90A3CE8E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{514A51AF-E9FB-4ED6-B47C-02E90A3CE8E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

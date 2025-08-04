@@ -1,4 +1,4 @@
-﻿namespace StravaUtilities.Models;
+﻿namespace StravaApi;
 
 public enum ResourceState
 {
