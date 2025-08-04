@@ -1,3 +1,3 @@
-﻿namespace StravaApi;
+﻿namespace StravaUtilities;
 
 public class Shoe : Gear { }

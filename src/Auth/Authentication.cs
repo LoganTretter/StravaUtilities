@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Headers;
 
-namespace StravaApi;
+namespace StravaUtilities;
 
 public partial class StravaApiClient
 {

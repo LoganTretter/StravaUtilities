@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
 
-namespace StravaApi;
+namespace StravaUtilities;
 public partial class StravaApiClient
 {
     // TODO - a callback for updating a status indicator?

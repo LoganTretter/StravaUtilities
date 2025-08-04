@@ -1,4 +1,4 @@
-﻿namespace StravaApi.Map;
+﻿namespace StravaUtilities.Map;
 
 public class LatitudeLongitude
 {

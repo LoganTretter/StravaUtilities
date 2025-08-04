@@ -1,4 +1,4 @@
-﻿namespace StravaApi;
+﻿namespace StravaUtilities;
 public class StravaApiException : ApplicationException
 {
     internal StravaApiException(string message) : base(message) { }

@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Web.Http;
 
-namespace StravaApi;
+namespace StravaUtilities;
 
 internal static class HttpUtils
 {

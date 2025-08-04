@@ -1,4 +1,4 @@
-﻿namespace StravaApi;
+﻿namespace StravaUtilities;
 
 public partial class StravaApiClient
 {
