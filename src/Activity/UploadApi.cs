@@ -99,7 +99,7 @@ public partial class StravaApiClient
         }
         catch (Exception ex)
         {
-            throw new StravaApiException($"Activity upload error:{Environment.NewLine}{ex.Message}", ex);
+            throw new StravaUtilitiesException($"Activity upload error:{Environment.NewLine}{ex.Message}", ex);
         }
     }
 
@@ -111,7 +111,7 @@ public partial class StravaApiClient
         }
         catch (Exception ex)
         {
-            throw new StravaApiException($"Error checking upload status for upload id {uploadId}:{Environment.NewLine}{ex.Message}", ex);
+            throw new StravaUtilitiesException($"Error checking upload status for upload id {uploadId}:{Environment.NewLine}{ex.Message}", ex);
         }
     }
 }

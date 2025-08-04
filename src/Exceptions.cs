@@ -1,6 +1,6 @@
 ﻿namespace StravaUtilities;
-public class StravaApiException : ApplicationException
+public class StravaUtilitiesException : ApplicationException
 {
-    internal StravaApiException(string message) : base(message) { }
-    internal StravaApiException(string message, Exception innerException) : base(message, innerException) { }
+    internal StravaUtilitiesException(string message) : base(message) { }
+    internal StravaUtilitiesException(string message, Exception innerException) : base(message, innerException) { }
 }
