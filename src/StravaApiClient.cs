@@ -1,7 +1,7 @@
 ﻿namespace StravaUtilities;
 
 /// <summary>
-/// 
+///  
 /// </summary>
 public partial class StravaApiClient
 {
