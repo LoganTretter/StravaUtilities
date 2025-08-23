@@ -8,7 +8,7 @@ public class Gear
     public string Id { get; set; }
 
     [JsonPropertyName("resource_state")]
-    public int ResourceState { get; set; } // 2 = summary, 3 = detail
+    public ResourceState ResourceState { get; set; }
 
     [JsonPropertyName("name")]
     public string Name { get; set; }

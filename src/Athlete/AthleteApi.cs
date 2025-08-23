@@ -4,7 +4,7 @@ public partial class StravaApiClient
 {
     public Athlete? CurrentAuthenticatedAthlete { get; private set; }
 
-    private async Task SetCurrentAthlete()
+    private async Task<Athlete> SetCurrentAthlete()
     {
         try
         {
@@ -14,6 +14,7 @@ public partial class StravaApiClient
                 throw new StravaUtilitiesException("Could not get current authenticated athlete.");
 
             CurrentAuthenticatedAthlete = athlete;
+            return athlete;
         }
         catch (Exception ex)
         {

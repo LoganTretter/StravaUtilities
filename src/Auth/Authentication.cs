@@ -47,7 +47,7 @@ public partial class StravaApiClient
     /// </summary>
     /// <returns></returns>
     /// <exception cref="StravaUtilitiesException"></exception>
-    private async Task CheckAuthenticationAndRefreshIfNeeded()
+    private async Task<Athlete> CheckAuthenticationAndRefreshIfNeeded()
     {
         if (Token == null)
         {
@@ -77,8 +77,10 @@ public partial class StravaApiClient
         if (refreshed == true || CurrentAuthenticatedAthlete == null)
         {
             HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token.AccessToken);
-            await SetCurrentAthlete().ConfigureAwait(false);
+            CurrentAuthenticatedAthlete = await SetCurrentAthlete().ConfigureAwait(false);
         }
+
+        return CurrentAuthenticatedAthlete;
     }
 
     /// <summary>
