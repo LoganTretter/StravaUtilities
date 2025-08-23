@@ -3,7 +3,7 @@
 /// <summary>
 /// A client for interfacing with the Strava API
 /// </summary>
-public partial class StravaApiClient
+public partial class StravaApiClient : IDisposable
 {
     private const string BaseUrl = "https://www.strava.com";
     private const string ApiPath = "api/v3";
@@ -49,5 +49,28 @@ public partial class StravaApiClient
         ArgumentNullException.ThrowIfNull(stravaTokenStorer);
 
         _stravaTokenStorer = stravaTokenStorer;
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+        
+        if (disposing)
+        {
+            if (_lazyAuthHttpClient.IsValueCreated)
+                AuthHttpClient?.Dispose();
+
+            if (_lazyHttpClient.IsValueCreated)
+                HttpClient?.Dispose();
+        }
+
+        _disposed = true;
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
