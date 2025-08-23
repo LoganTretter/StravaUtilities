@@ -140,7 +140,7 @@ public partial class StravaApiClient
     private bool TokenIsExpired(StravaApiToken token)
     {
         // Consider it expired if it will be in the next minute, to avoid a race condition (auth is validated, then auth expires, then next call is made and fails)
-        return token.AccessTokenExpiration != null && token.AccessTokenExpiration <= DateTimeOffset.UtcNow.AddMinutes(1);
+        return token.AccessTokenExpiration == null || token.AccessTokenExpiration <= DateTimeOffset.UtcNow.AddMinutes(1);
     }
 
     /// <summary>
