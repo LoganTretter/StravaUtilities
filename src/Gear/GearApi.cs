@@ -31,7 +31,7 @@ public partial class StravaApiClient
         {
             //tasks.Add(new Task(async () =>
             //{
-                var gear = await _httpClient.Get<T>($"gear/{gearId}").ConfigureAwait(false);
+                var gear = await HttpClient.Get<T>($"gear/{gearId}").ConfigureAwait(false);
                 gears.Add(gear);
             //}));
         }

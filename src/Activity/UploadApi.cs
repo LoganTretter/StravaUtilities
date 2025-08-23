@@ -45,11 +45,11 @@ public partial class StravaApiClient
             multipartFormDataContent.Add(new StringContent(val), key);
         }
 
-        _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("multipart/form-data"));
+        HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("multipart/form-data"));
 
         try
         {
-            var uploadStatus = await _httpClient.Post<ActivityUploadStatus>("uploads", multipartFormDataContent).ConfigureAwait(false);
+            var uploadStatus = await HttpClient.Post<ActivityUploadStatus>("uploads", multipartFormDataContent).ConfigureAwait(false);
 
             int i = 0;
             while (i++ < 60)
@@ -107,7 +107,7 @@ public partial class StravaApiClient
     {
         try
         {
-            return await _httpClient.Get<ActivityUploadStatus>($"uploads/{uploadId}").ConfigureAwait(false);
+            return await HttpClient.Get<ActivityUploadStatus>($"uploads/{uploadId}").ConfigureAwait(false);
         }
         catch (Exception ex)
         {

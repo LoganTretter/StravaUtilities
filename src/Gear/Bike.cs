@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-namespace StravaUtilities;
+﻿namespace StravaUtilities;
 
 public class Bike : Gear
 {

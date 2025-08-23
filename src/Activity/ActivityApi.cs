@@ -10,7 +10,7 @@ public partial class StravaApiClient
 
         try
         {
-            var activity = await _httpClient.Get<Activity>($"activities/{activityId}").ConfigureAwait(false);
+            var activity = await HttpClient.Get<Activity>($"activities/{activityId}").ConfigureAwait(false);
             if (activity == null) { throw new StravaUtilitiesException("Activity call succeeded but result is null."); }
             return activity;
         }
@@ -35,7 +35,7 @@ public partial class StravaApiClient
 
         try
         {
-            var activities = await _httpClient.Get<List<Activity>>($"activities?per_page={pageSize}&page={pageNumber}").ConfigureAwait(false);
+            var activities = await HttpClient.Get<List<Activity>>($"activities?per_page={pageSize}&page={pageNumber}").ConfigureAwait(false);
 
             if (activities == null) { throw new StravaUtilitiesException("Activity call succeeded but result is null."); }
             return activities;
@@ -48,7 +48,7 @@ public partial class StravaApiClient
 
     public async Task<Activity> UpdateActivity(ActivityUpdateInfo updateInfo)
     {
-        _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
+        HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
 
         var contents = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(updateInfo.Name))
@@ -81,7 +81,7 @@ public partial class StravaApiClient
 
         try
         {
-            return await _httpClient.Put<Activity>($"activities/{updateInfo.ActivityId}", formUrlEncodedContents).ConfigureAwait(false);
+            return await HttpClient.Put<Activity>($"activities/{updateInfo.ActivityId}", formUrlEncodedContents).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -95,7 +95,7 @@ public partial class StravaApiClient
 
         try
         {
-            await _httpClient.Delete($"activities/{activityId}").ConfigureAwait(false);
+            await HttpClient.Delete($"activities/{activityId}").ConfigureAwait(false);
         }
         catch (Exception ex)
         {
