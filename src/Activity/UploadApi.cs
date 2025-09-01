@@ -7,6 +7,8 @@ public partial class StravaApiClient
     // TODO - a callback for updating a status indicator?
     public async Task<ActivityUploadStatus> UploadActivity(ActivityUploadInfo uploadInfo)
     {
+        await CheckAuthenticationAndRefreshIfNeeded().ConfigureAwait(false);
+
         string dataType = uploadInfo.SourceDataFormat switch
         {
             DataFormat.Fit => "fit",
@@ -15,7 +17,7 @@ public partial class StravaApiClient
             DataFormat.GpxGZipped => "gpx.gz",
             DataFormat.Tcx => "tcx",
             DataFormat.TcxGZipped => "tcx.gz",
-            _ => throw new ApplicationException("Unsupported source data format.")
+            _ => throw new StravaUtilitiesException("Unsupported source data format.")
         };
 
         var vals = new Dictionary<string, string>

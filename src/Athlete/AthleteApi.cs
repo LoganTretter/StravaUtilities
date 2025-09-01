@@ -4,6 +4,11 @@ public partial class StravaApiClient
 {
     public Athlete? CurrentAuthenticatedAthlete { get; private set; }
 
+    public async Task<Athlete> GetAthlete()
+    {
+        return await CheckAuthenticationAndRefreshIfNeeded().ConfigureAwait(false);
+    }
+
     private async Task<Athlete> SetCurrentAthlete()
     {
         try

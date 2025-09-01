@@ -5,6 +5,8 @@ VisualStudioVersion = 17.8.34322.80
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StravaUtilities", "src\StravaUtilities.csproj", "{3989418E-3875-4909-9628-6AB1AD71F5E8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StravaUtilities.TestHarness", "tests\TestHarness\StravaUtilities.TestHarness.csproj", "{1F843D95-1FF3-C20C-BBA7-792046C405F7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{3989418E-3875-4909-9628-6AB1AD71F5E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3989418E-3875-4909-9628-6AB1AD71F5E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3989418E-3875-4909-9628-6AB1AD71F5E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F843D95-1FF3-C20C-BBA7-792046C405F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F843D95-1FF3-C20C-BBA7-792046C405F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F843D95-1FF3-C20C-BBA7-792046C405F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F843D95-1FF3-C20C-BBA7-792046C405F7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

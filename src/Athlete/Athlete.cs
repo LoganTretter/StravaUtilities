@@ -60,7 +60,4 @@ public class Athlete : MetaAthlete
 
     [JsonPropertyName("shoes")]
     public List<Shoe> Shoes { get; set; }
-
-    //[JsonPropertyName("clubs")]
-    //public List<Club> Clubs { get; set; }
 }

@@ -23,7 +23,7 @@ public static class SecretClientExtensions
         ArgumentNullException.ThrowIfNull(secretClient);
         ArgumentException.ThrowIfNullOrEmpty(secretKey);
 
-        Azure.Response<KeyVaultSecret?> secretResponse;
+        Azure.Response<KeyVaultSecret?>? secretResponse;
 
         try
         {
@@ -34,16 +34,35 @@ public static class SecretClientExtensions
             throw new ApplicationException($"Tried to get secret with key {secretKey} but an exception occurred when calling the vault", ex);
         }
 
+        // It seems like the client throws its own exception if the secret does not exist, even though that is undocumented
+        // But since the response is so wrapped, this validates all the layers in case something else can go wrong
+
         if (secretResponse == null)
             throw new ApplicationException($"Called vault to get secret with key {secretKey} but secret response was null");
 
         var keyVaultSecret = secretResponse.Value;
         if (keyVaultSecret == null)
-            throw new ApplicationException($"Called vault to get secret with key {secretKey} but key vault secret was null");
+        {
+            var message = $"Called vault to get secret with key {secretKey} but key vault secret was null";
+
+            var rawResponse = secretResponse.GetRawResponse();
+            if (rawResponse != null)
+            {
+                message += $". Additional info from {nameof(Azure.Response)}:" + Environment.NewLine +
+                    $"  {nameof(Azure.Response.IsError)}: {rawResponse.IsError}" + Environment.NewLine +
+                    $"  {nameof(Azure.Response.Status)}: {rawResponse.Status}" + Environment.NewLine +
+                    $"  {nameof(Azure.Response.ReasonPhrase)}: {rawResponse.ReasonPhrase}" + Environment.NewLine +
+                    $"  {nameof(Azure.Response.Content)}: {rawResponse.Content?.ToString()}";
+            }
+
+            throw new ApplicationException(message);
+        }
 
         var secretValue = keyVaultSecret.Value;
         if (string.IsNullOrEmpty(secretValue))
             throw new ApplicationException($"Called vault to get secret with key {secretKey} but secret value was null or empty");
+
+        // Now the secret is present as a string at least, but we want to try parse it to the expected type
 
         try
         {

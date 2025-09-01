@@ -10,8 +10,11 @@ public partial class StravaApiClient
 
         try
         {
-            var activity = await HttpClient.Get<Activity>($"activities/{activityId}").ConfigureAwait(false);
-            if (activity == null) { throw new StravaUtilitiesException("Activity call succeeded but result is null."); }
+            var activity = await HttpClient.Get<Activity?>($"activities/{activityId}").ConfigureAwait(false);
+
+            if (activity == null)
+                throw new StravaUtilitiesException("Activity call succeeded but result is null.");
+
             return activity;
         }
         catch (Exception ex)
@@ -35,9 +38,11 @@ public partial class StravaApiClient
 
         try
         {
-            var activities = await HttpClient.Get<List<Activity>>($"activities?per_page={pageSize}&page={pageNumber}").ConfigureAwait(false);
+            var activities = await HttpClient.Get<List<Activity>?>($"activities?per_page={pageSize}&page={pageNumber}").ConfigureAwait(false);
 
-            if (activities == null) { throw new StravaUtilitiesException("Activity call succeeded but result is null."); }
+            if (activities == null)
+                throw new StravaUtilitiesException("Activity call succeeded but result is null.");
+
             return activities;
         }
         catch (Exception ex)
