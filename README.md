@@ -6,7 +6,7 @@ Mostly it contains an API client. But I am calling it "utilities" because I may 
 
 ## Prerequisites
 
-The webhooks are subscribed to by your "API application", kind of like your access policy to use the Strava API.
+To call the API, you need to go through your "API application", kind of like your access policy to use the Strava API.
 
 They describe how to create an API app here: https://developers.strava.com/docs/getting-started/#account
 
