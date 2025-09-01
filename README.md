@@ -19,12 +19,16 @@ Standard tools:
 - [Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/general/) for storing Strava API access token
   - [SecretClient](https://learn.microsoft.com/en-us/dotnet/api/overview/azure/security.keyvault.secrets-readme?view=azure-dotnet) for interfacing with vault
 
- ## Auth
+## Auth
 
- TODO
+TODO
 
- https://developers.strava.com/docs/authentication/
+https://developers.strava.com/docs/authentication/
 
- ## Testing
+## Testing
 
- TODO
+There is a [test harnness](tests/TestHarness) project, just a console app, that can be used to manually run tests. I just call whatever test I want in [ManualTestRunner](tests/TestHarness/ManualTestRunner.cs).
+
+At this point there are no actual unit tests, because I mostly want to actually call the Strava API, in particular for uploading or updating activities. I want to "clean up" by test activities when I do this, so it's better suited for manual testing.
+
+Configure the test project for your Strava API app, athlete, activities, etc., using an ```appsettings.json``` file (see [appsettings_sample.json](tests/TestHarness/appsettings_sample.json) for an example).
