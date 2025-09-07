@@ -2,6 +2,9 @@
 
 namespace StravaUtilities;
 
+/// <summary>
+/// The response given by Strava on a token request
+/// </summary>
 public class StravaAuthResponse
 {
     [JsonPropertyName("access_token")]

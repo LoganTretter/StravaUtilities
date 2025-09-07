@@ -1,0 +1,36 @@
+﻿namespace StravaUtilities;
+
+/// <summary>
+/// Represents the various levels of access permissions that can be granted to an application
+/// </summary>
+public enum Scope
+{
+    /// <summary>
+    /// read public segments, public routes, public profile data, public posts, public events, club feeds, and leaderboards
+    /// </summary>
+    Read,
+    /// <summary>
+    /// read private routes, private segments, and private events for the user
+    /// </summary>
+    ReadAll,
+    /// <summary>
+    /// read all profile information even if the user has set their profile visibility to Followers or Only You
+    /// </summary>
+    ProfileReadAll,
+    /// <summary>
+    /// update the user's weight and Functional Threshold Power (FTP), and access to star or unstar segments on their behalf
+    /// </summary>
+    ProfileWrite,
+    /// <summary>
+    /// read the user's activity data for activities that are visible to Everyone and Followers, excluding privacy zone data
+    /// </summary>
+    ActivityRead,
+    /// <summary>
+    /// the same access as activity:read, plus privacy zone data and access to read the user's activities with visibility set to Only You
+    /// </summary>
+    ActivityReadAll,
+    /// <summary>
+    /// access to create manual activities and uploads, and access to edit any activities that are visible to the app, based on activity read access level
+    /// </summary>
+    ActivityWrite
+}
