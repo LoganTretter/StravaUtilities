@@ -15,6 +15,6 @@ internal class ManualTestRunner(
         // This is just an entry point that can be used to run whatever test I want
         // in lieu of actual unit tests, since I want to actually call the Strava API, not just test against mocks
 
-        authTests.PromptUserToAuthorize();
+        await authTests.ClientWithTokenConstructorSucceeds();
     }
 }

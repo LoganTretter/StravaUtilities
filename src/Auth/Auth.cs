@@ -5,6 +5,9 @@ namespace StravaUtilities;
 
 public partial class StravaApiClient
 {
+    // TODO need to handle authorization too - check scopes for ability to do certain actions
+    // Need write access to upload, read access to see activities, etc.
+
     private const string AuthorizePath = "oauth/authorize";
     private const string TokenPath = "oauth/token";
 
@@ -15,6 +18,22 @@ public partial class StravaApiClient
     private IStravaApiTokenStorer? _stravaTokenStorer;
 
     public StravaApiToken? Token { get; set; }
+
+    /// <summary>
+    /// Manually adds an auth token to the api client. Subsequent calls will use it.
+    /// </summary>
+    /// <param name="token"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="ArgumentException">If <see cref="StravaApiToken.AccessToken"/> is null or empty</exception>
+    public void SetAuthToken(StravaApiToken token)
+    {
+        ArgumentNullException.ThrowIfNull(token);
+
+        if (string.IsNullOrEmpty(token.AccessToken))
+            throw new ArgumentException($"{nameof(StravaApiToken.AccessToken)} was null or empty in the provided token", nameof(token));
+
+        Token = token;
+    }
 
     /// <summary>
     /// <para>Opens a web page from Strava to prompt the user to authorize this API application.</para>
@@ -78,7 +97,9 @@ public partial class StravaApiClient
     }
 
     /// <summary>
-    /// Exchanges the initial authorization code for an access token from the Strava API, completing the user authorization flow.
+    /// <para>Exchanges the initial authorization code for an access token from the Strava API, completing the user authorization flow.</para>
+    /// <para>Sets the <see cref="Token"> property so subsequent calls can use it.</para>
+    /// <para>Stores it if a <see cref="IStravaApiTokenStorer"> is present.</para>
     /// </summary>
     /// <param name="authorizationCode">The authorization code received from the redirect uri on the user authorization prompt.</param>
     /// <returns>A <see cref="StravaApiToken"/></returns>
@@ -109,33 +130,6 @@ public partial class StravaApiClient
         }
     }
 
-    // TODO need to handle authorization too - check scopes for ability to do certain actions
-    // Need write access to upload, read access to see activities, etc.
-
-    /// <summary>
-    /// Adds authentication to the api client.
-    /// This is required once before any calls if an instance of <see cref="IStravaApiTokenStorer"/> was not provided to the api client.
-    /// 
-    /// At minimum the <see cref="StravaApiToken.AccessToken"/> must be provided. Subsequent api calls may be made with just this,
-    /// but then the caller is responsible for validating it is still valid before making subsequent calls.
-    /// If <see cref="StravaApiToken.RefreshToken"/> and <see cref="StravaApiToken.AccessTokenExpiration"/> are also provided,
-    /// then the token is automatically checked for expiration and refreshed, and all further calls to the api client will do the same.
-    /// 
-    /// This call also fetches the athlete corresponding to the authentication, so <see cref="CurrentAuthenticatedAthlete"/> will be set.
-    /// </summary>
-    /// <param name="token"></param>
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <exception cref="ArgumentException">If <see cref="StravaApiToken.AccessToken"/> is null or empty</exception>
-    public void SetAuthToken(StravaApiToken token)
-    {
-        ArgumentNullException.ThrowIfNull(token);
-
-        if (string.IsNullOrEmpty(token.AccessToken))
-            throw new ArgumentException($"token.{nameof(StravaApiToken.AccessToken)} was null or empty in the provided token", nameof(token));
-
-        Token = token;
-    }
-
     /// <summary>
     /// Checks if the api client has a current, valid auth token.
     /// If not, tries to either get a token from storage, or refresh the token.
@@ -146,14 +140,16 @@ public partial class StravaApiClient
     {
         if (Token == null)
         {
-            // Mostly on the first call to this instance of the client, if token has not yet been provided, try get it from storage (if a storer was provided)
+            if (_stravaTokenStorer == null)
+                throw new StravaUtilitiesException($"No token is present, and there is no {nameof(IStravaApiTokenStorer)} with which to try fetch one.");
+
+            // Mostly on the first call to this instance of the client, if token has not yet been provided, try get it from storage
             Token = await TryGetTokenFromStorage().ConfigureAwait(false);
 
             if (Token == null)
-                throw new StravaUtilitiesException("No authentication is added.");
-
+                throw new StravaUtilitiesException($"No token is present, and one was not able to be fetched from the {nameof(IStravaApiTokenStorer)}");
             if (string.IsNullOrEmpty(Token.AccessToken))
-                throw new StravaUtilitiesException("Access token was null or empty in token fetched from storage");
+                throw new StravaUtilitiesException($"Access token was null or empty in token fetched from the {nameof(IStravaApiTokenStorer)}");
         }
 
         bool refreshed = false;
@@ -208,6 +204,12 @@ public partial class StravaApiClient
         }
     }
 
+    /// <summary>
+    /// Calls Strava to get an auth token
+    /// </summary>
+    /// <param name="content">Content for the token call</param>
+    /// <returns></returns>
+    /// <exception cref="StravaUtilitiesException"></exception>
     private async Task<StravaApiToken> GetToken(FormUrlEncodedContent content)
     {
         var start = DateTimeOffset.UtcNow;
