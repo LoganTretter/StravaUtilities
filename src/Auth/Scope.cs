@@ -34,3 +34,36 @@ public enum Scope
     /// </summary>
     ActivityWrite
 }
+
+internal static class ScopeExtensions
+{
+    internal static string ToStravaStringRepresentation(this Scope scope)
+    {
+        return scope switch
+        {
+            Scope.Read => "read",
+            Scope.ReadAll => "read_all",
+            Scope.ProfileReadAll => "profile:read_all",
+            Scope.ProfileWrite => "profile:write",
+            Scope.ActivityRead => "activity:read",
+            Scope.ActivityReadAll => "activity:read_all",
+            Scope.ActivityWrite => "activity:write",
+            _ => throw new NotImplementedException()
+        };
+    }
+
+    internal static Scope FromStravaStringRepresentation(string scopeString)
+    {
+        return scopeString switch
+        {
+            "read" => Scope.Read,
+            "read_all" => Scope.ReadAll,
+            "profile:read_all" => Scope.ProfileReadAll,
+            "profile:write" => Scope.ProfileWrite,
+            "activity:read" => Scope.ActivityRead,
+            "activity:read_all" => Scope.ActivityReadAll,
+            "activity:write" => Scope.ActivityWrite,
+            _ => throw new NotImplementedException($"Scope string '{scopeString}' is not mapped to an enum value")
+        };
+    }
+}

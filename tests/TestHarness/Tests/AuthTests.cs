@@ -7,6 +7,11 @@ internal class AuthTests(IOptions<StravaUtilitiesTestHarnessOptions> options, St
 {
     private readonly StravaUtilitiesTestHarnessOptions _options = options.Value;
 
+    internal async Task PromptUserToAuthorizeAndCompleteAuthProcess()
+    {
+        await stravaApiClient.PromptUserToAuthorizeAndCompleteAuthProcess([Scope.Read, Scope.ReadAll, Scope.ProfileReadAll, Scope.ActivityRead, Scope.ActivityReadAll, Scope.ActivityWrite]);
+    }
+
     internal void PromptUserToAuthorize()
     {
         stravaApiClient.PromptUserToAuthorize([Scope.Read, Scope.ReadAll, Scope.ProfileReadAll, Scope.ActivityRead, Scope.ActivityReadAll, Scope.ActivityWrite]);

@@ -36,101 +36,6 @@ public partial class StravaApiClient
     }
 
     /// <summary>
-    /// <para>Opens a web page from Strava to prompt the user to authorize this API application.</para>
-    /// <para>After the user authorizes, they will be taken to <paramref name="redirectUrl"/>. Embedded in this will be the initial authorization code.</para>
-    /// <para>That code can be manually used to call <see cref="ExchangeInitialAuthCodeForToken"/> to complete the authorization flow.</para>
-    /// </summary>
-    /// <param name="scopes">The scopes to request</param>
-    /// <param name="redirectUrl">A url to redirect the user to after authorizing. If no value is provided it will just take them to a blank localhost page.    /// </param>
-    /// <exception cref="ArgumentException"></exception>
-    /// <exception cref="NotImplementedException"></exception>
-    /// <exception cref="StravaUtilitiesException"></exception>
-    public void PromptUserToAuthorize(ICollection<Scope> scopes, string redirectUrl = "http://localhost/exchange_token")
-    {
-        if (scopes.Count == 0)
-            throw new ArgumentException("Must provide at least one scope", nameof(scopes));
-
-        var scopesString = string.Join(",", scopes.Select(s =>
-            s switch
-            {
-                Scope.Read => "read",
-                Scope.ReadAll => "read_all",
-                Scope.ProfileReadAll => "profile:read_all",
-                Scope.ProfileWrite => "profile:write",
-                Scope.ActivityRead => "activity:read",
-                Scope.ActivityReadAll => "activity:read_all",
-                Scope.ActivityWrite => "activity:write",
-                _ => throw new NotImplementedException()
-            }));
-
-        var queryParams = new Dictionary<string, string>
-        {
-            { "client_id", _clientId },
-            { "response_type", "code" },
-            { "redirect_uri", redirectUrl },
-            { "approval_prompt", "force" },
-            { "scope", scopesString }
-        };
-
-        var queryString = string.Join("&", queryParams.Select(p => $"{p.Key}={p.Value}"));
-
-        var uriBuilder = new UriBuilder(BaseUri)
-        {
-            Path = AuthorizePath,
-            Query = queryString.ToString()
-        };
-
-        var url = uriBuilder.ToString();
-
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true // open the URL in the default browser
-            });
-        }
-        catch (Exception ex)
-        {
-            throw new StravaUtilitiesException("Failed to open the authorization url", ex);
-        }
-    }
-
-    /// <summary>
-    /// <para>Exchanges the initial authorization code for an access token from the Strava API, completing the user authorization flow.</para>
-    /// <para>Sets the <see cref="Token"> property so subsequent calls can use it.</para>
-    /// <para>Stores it if a <see cref="IStravaApiTokenStorer"> is present.</para>
-    /// </summary>
-    /// <param name="authorizationCode">The authorization code received from the redirect uri on the user authorization prompt.</param>
-    /// <returns>A <see cref="StravaApiToken"/></returns>
-    /// <exception cref="StravaUtilitiesException"></exception>
-    public async Task<StravaApiToken> ExchangeInitialAuthCodeForToken(string authorizationCode)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(authorizationCode);
-
-        try
-        {
-            using var content = new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                { "client_id", _clientId },
-                { "client_secret", _clientSecret },
-                { "grant_type", "authorization_code" },
-                { "code", authorizationCode}
-            });
-
-            Token = await GetToken(content).ConfigureAwait(false);
-
-            await TryAddOrUpdateTokenToStorage().ConfigureAwait(false);
-
-            return Token;
-        }
-        catch (Exception ex)
-        {
-            throw new StravaUtilitiesException("Auth call failed", ex);
-        }
-    }
-
-    /// <summary>
     /// Checks if the api client has a current, valid auth token.
     /// If not, tries to either get a token from storage, or refresh the token.
     /// </summary>
@@ -285,6 +190,110 @@ public partial class StravaApiClient
         catch (Exception ex)
         {
             throw new StravaUtilitiesException("Tried to add or update token to storage but an exception was thrown", ex);
+        }
+    }
+    
+    /// <summary>
+    /// <para>Opens a web page from Strava to prompt the user to authorize this API application.</para>
+    /// <para>After the user authorizes, they will be taken to <paramref name="redirectUrl"/>. Embedded in this will be the initial authorization code.</para>
+    /// <para>That code can be manually used to call <see cref="ExchangeInitialAuthCodeForToken"/> to complete the authorization flow.</para>
+    /// </summary>
+    /// <param name="scopes">The scopes to request</param>
+    /// <param name="redirectUrl">A url to redirect the user to after authorizing. If no value is provided it will just take them to a blank localhost page.    /// </param>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="NotImplementedException"></exception>
+    /// <exception cref="StravaUtilitiesException"></exception>
+    public void PromptUserToAuthorize(ICollection<Scope> scopes, string redirectUrl = "http://localhost:8080/exchange_token")
+    {
+        if (scopes.Count == 0)
+            throw new ArgumentException("Must provide at least one scope", nameof(scopes));
+
+        var scopesString = string.Join(",", scopes.Select(s => s.ToStravaStringRepresentation()));
+
+        var queryParams = new Dictionary<string, string>
+        {
+            { "client_id", _clientId },
+            { "response_type", "code" },
+            { "redirect_uri", redirectUrl },
+            { "approval_prompt", "force" },
+            { "scope", scopesString }
+        };
+
+        var queryString = string.Join("&", queryParams.Select(p => $"{p.Key}={p.Value}"));
+
+        var uriBuilder = new UriBuilder(BaseUri)
+        {
+            Path = AuthorizePath,
+            Query = queryString.ToString()
+        };
+
+        var url = uriBuilder.ToString();
+
+        try
+        {
+            LocalServer.OpenWebPage(url);
+        }
+        catch (Exception ex)
+        {
+            throw new StravaUtilitiesException("Failed to open the Strava authorization url", ex);
+        }
+    }
+
+    /// <summary>
+    /// <para>Opens a web page from Strava to prompt the user to authorize this API application.</para>
+    /// <para>After the user authorizes, they will be taken to a generic local host page, and this process will complete the auth process.</para>
+    /// </summary>
+    /// <param name="scopes">The scopes to request</param>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="NotImplementedException"></exception>
+    /// <exception cref="StravaUtilitiesException"></exception>
+    public async Task<StravaApiToken> PromptUserToAuthorizeAndCompleteAuthProcess(ICollection<Scope> scopes)
+    {
+        var redirectUrl = "http://localhost:8080/exchange_token/";
+
+        PromptUserToAuthorize(scopes, redirectUrl);
+
+        using var localServer = new LocalServer(redirectUrl);
+
+        // Wait for the redirect and return the query params captured from the redirect
+        var result = await localServer.WaitForRequestAndGetQueryParams(TimeSpan.FromMinutes(1)).ConfigureAwait(false);
+
+        var exchangeTokenResponse = new ExchangeTokenResponse(result);
+
+        return await ExchangeInitialAuthCodeForToken(exchangeTokenResponse.AuthorizationCode).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// <para>Exchanges the initial authorization code for an access token from the Strava API, completing the user authorization flow.</para>
+    /// <para>Sets the <see cref="Token"> property so subsequent calls can use it.</para>
+    /// <para>Stores it if a <see cref="IStravaApiTokenStorer"> is present.</para>
+    /// </summary>
+    /// <param name="authorizationCode">The authorization code received from the redirect uri on the user authorization prompt.</param>
+    /// <returns>A <see cref="StravaApiToken"/></returns>
+    /// <exception cref="StravaUtilitiesException"></exception>
+    public async Task<StravaApiToken> ExchangeInitialAuthCodeForToken(string authorizationCode)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(authorizationCode);
+
+        try
+        {
+            using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                { "client_id", _clientId },
+                { "client_secret", _clientSecret },
+                { "grant_type", "authorization_code" },
+                { "code", authorizationCode}
+            });
+
+            Token = await GetToken(content).ConfigureAwait(false);
+
+            await TryAddOrUpdateTokenToStorage().ConfigureAwait(false);
+
+            return Token;
+        }
+        catch (Exception ex)
+        {
+            throw new StravaUtilitiesException("Call to exchange initial auth code for token failed", ex);
         }
     }
 }
