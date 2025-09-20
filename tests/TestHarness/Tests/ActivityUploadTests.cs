@@ -30,6 +30,6 @@ internal class ActivityUploadTests(IOptions<StravaUtilitiesTestHarnessOptions> o
             SuppressFromFeed = true
         };
 
-        await stravaApiClient.UploadActivity(uploadInfo).ConfigureAwait(false);
+        await stravaApiClient.UploadActivityAndWaitForCompletion(uploadInfo, _options.AthleteId).ConfigureAwait(false);
     }
 }

@@ -35,12 +35,12 @@ internal static class Startup
             return new SecretClient(new Uri(options.KeyVaultUri), new DefaultAzureCredential());
         });
 
-        serviceCollection.AddScoped<IStravaApiTokenStorer, StravaApiTokenKeyVaultStorer>();
+        serviceCollection.AddScoped<IStravaApiAthleteAuthInfoStorer, StravaApiAthleteAuthInfoKeyVaultStorer>();
 
         serviceCollection.AddScoped(serviceProvider =>
         {
             var options = serviceProvider.GetRequiredService<IOptions<StravaUtilitiesTestHarnessOptions>>().Value;
-            var stravaTokenStorer = serviceProvider.GetRequiredService<IStravaApiTokenStorer>();
+            var stravaTokenStorer = serviceProvider.GetRequiredService<IStravaApiAthleteAuthInfoStorer>();
             return new StravaApiClient(options.StravaApiClientId, options.StravaApiClientSecret, stravaTokenStorer);
         });
 

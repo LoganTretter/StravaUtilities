@@ -1,14 +1,11 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net.Mime;
 using System.Text.Json.Serialization;
 
 namespace StravaUtilities;
 public partial class StravaApiClient
 {
-    // TODO - a callback for updating a status indicator?
-    public async Task<ActivityUploadStatus> UploadActivity(ActivityUploadInfo uploadInfo)
+    public async Task<ActivityUploadStatus> UploadActivity(ActivityUploadInfo uploadInfo, long athleteId, StravaApiAthleteAuthInfo? authInfo = null)
     {
-        await CheckAuthenticationAndRefreshIfNeeded().ConfigureAwait(false);
-
         string dataType = uploadInfo.SourceDataFormat switch
         {
             DataFormat.Fit => "fit",
@@ -17,7 +14,7 @@ public partial class StravaApiClient
             DataFormat.GpxGZipped => "gpx.gz",
             DataFormat.Tcx => "tcx",
             DataFormat.TcxGZipped => "tcx.gz",
-            _ => throw new StravaUtilitiesException("Unsupported source data format.")
+            _ => throw new StravaUtilitiesException($"Unsupported source data format '{uploadInfo.SourceDataFormat}'")
         };
 
         var vals = new Dictionary<string, string>
@@ -36,7 +33,7 @@ public partial class StravaApiClient
         if (uploadInfo.WorkoutType.HasValue)
             vals.Add("workout_type", ((int)uploadInfo.WorkoutType).ToString());
 
-        using var multipartFormDataContent = new MultipartFormDataContent
+        using var content = new MultipartFormDataContent
         {
             // Couldn't get this to work from the string directly, only from a file
             //{ new ByteArrayContent(Encoding.UTF8.GetBytes(uploadInfo.ActivityFileString)), "file", uploadInfo.ExternalId}
@@ -44,42 +41,66 @@ public partial class StravaApiClient
         };
         foreach (var (key, val) in vals)
         {
-            multipartFormDataContent.Add(new StringContent(val), key);
+            content.Add(new StringContent(val), key);
         }
 
-        HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("multipart/form-data"));
+        authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
 
         try
         {
-            var uploadStatus = await HttpClient.Post<ActivityUploadStatus>("uploads", multipartFormDataContent).ConfigureAwait(false);
+            var uploadStatus = await StravaHttpClient.Post<ActivityUploadStatus>($"{ApiPath}/uploads", authInfo, content, MediaTypeNames.Multipart.FormData).ConfigureAwait(false);
 
-            int i = 0;
-            while (i++ < 60)
+            return uploadStatus;
+        }
+        catch (Exception ex)
+        {
+            throw new StravaUtilitiesException($"Activity upload error: {ex.Message}", ex);
+        }
+    }
+
+    // TODO - a callback for updating a status indicator?
+    public async Task<ActivityUploadStatus> UploadActivityAndWaitForCompletion(ActivityUploadInfo uploadInfo, long athleteId, byte secondsToWait = 60, StravaApiAthleteAuthInfo? authInfo = null)
+    {
+        authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
+
+        try
+        {
+            var uploadStatus = await UploadActivity(uploadInfo, athleteId).ConfigureAwait(false);
+
+            ushort i = 0;
+            while (i++ < secondsToWait)
             {
                 if (uploadStatus.CurrentStatus == CurrentUploadStatus.Error || !string.IsNullOrEmpty(uploadStatus.ErrorMessage))
                 {
-                    // Doesn't seem to be possible to delete an activity, or I don't have the write scope
-                    //if (reUploadIfDuplicate && (uploadStatus.ErrorMessage?.Contains("duplicate of <a href") ?? false))
-                    //{
-                    //    long activityId = 0;
-                    //    await DeleteActivity(activityId).ConfigureAwait(false);
-                    //    return await UploadActivity(uploadInfo, false).ConfigureAwait(false);
-                    //}
-
-                    throw new ApplicationException($"Upload status is error:{Environment.NewLine}{uploadStatus.ErrorMessage}");
+                    break;
                 }
 
                 if (uploadStatus.CurrentStatus == CurrentUploadStatus.Ready)
                 {
                     if (!uploadStatus.ActivityId.HasValue)
-                        throw new ApplicationException("Upload status is ready but no activity id was returned. It may or may not be uploaded.");
+                        throw new StravaUtilitiesException("Upload status is ready but no activity id was returned. It may or may not be uploaded.");
 
                     break;
                 }
 
-                await Task.Delay(1000).ConfigureAwait(false);
+                await Task.Delay(millisecondsDelay: 1000).ConfigureAwait(false);
 
-                uploadStatus = await CheckUploadStatus(uploadStatus.Id).ConfigureAwait(false);
+                uploadStatus = await CheckUploadStatus(uploadStatus.Id, athleteId, authInfo).ConfigureAwait(false);
+            }
+
+            switch (uploadStatus.CurrentStatus)
+            {
+                case CurrentUploadStatus.Deleted:
+                    throw new StravaUtilitiesException($"Upload indicates the activity is deleted: {uploadStatus.ErrorMessage}");
+                case CurrentUploadStatus.Error:
+                    throw new StravaUtilitiesException($"Upload errored: {uploadStatus.ErrorMessage}");
+                case CurrentUploadStatus.Processing:
+                    string msg = "Upload is still processing" + (secondsToWait > 0 ? $" after waiting {i} seconds" : "");
+                    throw new StravaUtilitiesException(msg);
+                case CurrentUploadStatus.Ready:
+                    break;
+                default:
+                    throw new NotImplementedException($"{nameof(CurrentUploadStatus)} of {uploadStatus.CurrentStatus} is not supported");
             }
 
             // Some fields can't be provided in the initial upload so send them with an update
@@ -94,22 +115,23 @@ public partial class StravaApiClient
                 SuppressFromFeed = uploadInfo.SuppressFromFeed,
                 Private = uploadInfo.Private
             };
-
-            await UpdateActivity(updateInfo).ConfigureAwait(false);
+            await UpdateActivity(updateInfo, athleteId, authInfo).ConfigureAwait(false);
 
             return uploadStatus;
         }
         catch (Exception ex)
         {
-            throw new StravaUtilitiesException($"Activity upload error:{Environment.NewLine}{ex.Message}", ex);
+            throw new StravaUtilitiesException($"Activity upload error: {ex.Message}", ex);
         }
     }
 
-    public async Task<ActivityUploadStatus> CheckUploadStatus(long uploadId)
+    public async Task<ActivityUploadStatus> CheckUploadStatus(long uploadId, long athleteId, StravaApiAthleteAuthInfo? authInfo = null)
     {
+        authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
+
         try
         {
-            return await HttpClient.Get<ActivityUploadStatus>($"uploads/{uploadId}").ConfigureAwait(false);
+            return await StravaHttpClient.Get<ActivityUploadStatus>($"{ApiPath}/uploads/{uploadId}", authInfo).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -133,6 +155,7 @@ public class ActivityUploadStatus
 
     public CurrentUploadStatus CurrentStatus => Status switch
     {
+        // They just send back these certain strings...
         "Your activity is still being processed." => CurrentUploadStatus.Processing,
         "The created activity has been deleted." => CurrentUploadStatus.Deleted,
         "There was an error processing your activity." => CurrentUploadStatus.Error,

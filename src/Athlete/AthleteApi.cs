@@ -2,28 +2,12 @@
 
 public partial class StravaApiClient
 {
-    public Athlete? CurrentAuthenticatedAthlete { get; private set; }
-
-    public async Task<Athlete> GetAthlete()
+    public async Task<Athlete> GetAthlete(long id, StravaApiAthleteAuthInfo? authInfo = null)
     {
-        return await CheckAuthenticationAndRefreshIfNeeded().ConfigureAwait(false);
-    }
+        authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(id).ConfigureAwait(false);
 
-    private async Task<Athlete> SetCurrentAthlete()
-    {
-        try
-        {
-            var athlete = await HttpClient.Get<Athlete>("athlete").ConfigureAwait(false);
+        var athlete = await StravaHttpClient.Get<Athlete>($"{ApiPath}/athlete", authInfo).ConfigureAwait(false);
 
-            if (athlete == null)
-                throw new StravaUtilitiesException("Could not get current authenticated athlete.");
-
-            CurrentAuthenticatedAthlete = athlete;
-            return athlete;
-        }
-        catch (Exception ex)
-        {
-            throw new StravaUtilitiesException("Could not get current authenticated athlete.", ex);
-        }
+        return athlete;
     }
 }

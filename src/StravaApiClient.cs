@@ -8,11 +8,9 @@ public partial class StravaApiClient : IDisposable
     private const string BaseUrl = "https://www.strava.com";
     private const string ApiPath = "api/v3";
     private static readonly Uri BaseUri = new Uri(BaseUrl, UriKind.Absolute);
-    private static readonly Uri ApiUri = new Uri(ApiPath + "/", UriKind.Relative);
 
-    private readonly Lazy<HttpClient> _lazyHttpClient =
-        new Lazy<HttpClient>(() => new() { BaseAddress = new Uri(BaseUri, ApiUri) });
-    private HttpClient HttpClient => _lazyHttpClient.Value;
+    private readonly Lazy<HttpClient> _lazyHttpClient = new(() => new() { BaseAddress = new Uri(BaseUrl, UriKind.Absolute) });
+    private HttpClient StravaHttpClient => _lazyHttpClient.Value;
 
     private readonly string _clientId;
     private readonly string _clientSecret;
@@ -21,7 +19,7 @@ public partial class StravaApiClient : IDisposable
 
     /// <summary>
     /// <para>Creates a new instance of the api client with no existing token or way to look one up.</para>
-    /// <para>Subsequent calls will fail unless a token is manually added with <see cref="SetAuthToken"/>, or auth is initiated with <see cref="ExchangeInitialAuthCodeForToken">.</para>
+    /// <para>Subsequent calls will fail unless a token is manually provided, or auth is initiated with <see cref="ExchangeInitialAuthCodeForToken">.</para>
     /// </summary>
     /// <param name="clientId"></param>
     /// <param name="clientSecret"></param>
@@ -37,28 +35,6 @@ public partial class StravaApiClient : IDisposable
     }
 
     /// <summary>
-    /// Creates a new instance of the api client with an existing token.
-    /// On subsequent calls, that token will be used directly.
-    /// Any refreshes to the token will be present on the <see cref="Token"/> property.
-    /// </summary>
-    /// <param name="clientId">The client id for the API application</param>
-    /// <param name="clientSecret">The client secret for the API application</param>
-    /// <param name="token"></param>
-    /// <exception cref="ArgumentNullException">If any argument is null</exception>
-    /// <exception cref="ArgumentException">If <paramref name="clientId"/> or <paramref name="clientSecret"/> are empty or whitespace</exception>
-    /// <exception cref="ArgumentException">If <see cref="StravaApiToken.AccessToken"/> is empty or whitespace</exception>
-    public StravaApiClient(string clientId, string clientSecret, StravaApiToken token)
-        : this(clientId, clientSecret)
-    {
-        ArgumentNullException.ThrowIfNull(token);
-
-        if (string.IsNullOrWhiteSpace(token.AccessToken))
-            throw new ArgumentException($"{nameof(StravaApiToken.AccessToken)} was empty or whitespace in the provided token", nameof(token));
-
-        Token = token;
-    }
-
-    /// <summary>
     /// <para>Creates a new instance of the api client with a strava token storer.</para>
     /// <para>On subsequent calls, an existing token will be loaded with the storer and used.</para>
     /// <para>Any refreshes to the token will be stored with the storer.</para>
@@ -68,12 +44,12 @@ public partial class StravaApiClient : IDisposable
     /// <param name="stravaTokenStorer">An instace of a strava token storer</param>
     /// <exception cref="ArgumentNullException">If any argument is null</exception>
     /// <exception cref="ArgumentException">If <paramref name="clientId"/> or <paramref name="clientSecret"/> are empty or whitespace</exception>
-    public StravaApiClient(string clientId, string clientSecret, IStravaApiTokenStorer stravaTokenStorer)
+    public StravaApiClient(string clientId, string clientSecret, IStravaApiAthleteAuthInfoStorer stravaTokenStorer)
         : this(clientId, clientSecret)
     {
         ArgumentNullException.ThrowIfNull(stravaTokenStorer);
 
-        _stravaTokenStorer = stravaTokenStorer;
+        _stravaAthleteAuthInfoStorer = stravaTokenStorer;
     }
 
     protected virtual void Dispose(bool disposing)
@@ -83,11 +59,11 @@ public partial class StravaApiClient : IDisposable
         
         if (disposing)
         {
-            if (_lazyAuthHttpClient.IsValueCreated)
-                AuthHttpClient?.Dispose();
-
             if (_lazyHttpClient.IsValueCreated)
-                HttpClient?.Dispose();
+                StravaHttpClient?.Dispose();
+
+            if (_lazyTokenCache.IsValueCreated)
+                AuthInfoCache?.Dispose();
         }
 
         _disposed = true;

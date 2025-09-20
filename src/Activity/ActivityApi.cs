@@ -1,29 +1,18 @@
-﻿using System.Net.Http.Headers;
-
-namespace StravaUtilities;
+﻿namespace StravaUtilities;
 
 public partial class StravaApiClient
 {
-    public async Task<Activity> GetActivity(long activityId)
+    public async Task<Activity> GetActivity(long activityId, long athleteId, StravaApiAthleteAuthInfo? authInfo = null)
     {
-        await CheckAuthenticationAndRefreshIfNeeded().ConfigureAwait(false);
+        authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
 
-        try
-        {
-            var activity = await HttpClient.Get<Activity?>($"activities/{activityId}").ConfigureAwait(false);
+        // TODO check if it just returns null if it doesn't exist, then maybe it should be a special error?
+        var activity = await StravaHttpClient.Get<Activity>($"{ApiPath}/activities /{activityId}", authInfo).ConfigureAwait(false);
 
-            if (activity == null)
-                throw new StravaUtilitiesException("Activity call succeeded but result is null.");
-
-            return activity;
-        }
-        catch (Exception ex)
-        {
-            throw new StravaUtilitiesException($"Error getting activity by id {activityId}:{Environment.NewLine}{ex.Message}", ex);
-        }
+        return activity;
     }
 
-    public async Task<List<Activity>> GetActivities(int pageSize = 200, int pageNumber = 1)
+    public async Task<List<Activity>> GetActivities(long athleteId, int pageSize = 200, int pageNumber = 1, StravaApiAthleteAuthInfo? authInfo = null)
     {
         if (pageSize > 200)
             throw new StravaUtilitiesException($"Max {nameof(pageSize)} is 200, received {pageSize}. The default is 200.");
@@ -34,14 +23,12 @@ public partial class StravaApiClient
         if (pageNumber < 1)
             throw new StravaUtilitiesException($"{nameof(pageNumber)} must be >= 1. The first page is # 1.");
 
-        await CheckAuthenticationAndRefreshIfNeeded().ConfigureAwait(false);
+        authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
 
         try
         {
-            var activities = await HttpClient.Get<List<Activity>?>($"activities?per_page={pageSize}&page={pageNumber}").ConfigureAwait(false);
-
-            if (activities == null)
-                throw new StravaUtilitiesException("Activity call succeeded but result is null.");
+            // TODO check if it returns empty array or null if it doesn't exist
+            var activities = await StravaHttpClient.Get<List<Activity>>($"{ApiPath}/activities?per_page={pageSize}&page={pageNumber}", authInfo).ConfigureAwait(false);
 
             return activities;
         }
@@ -51,10 +38,8 @@ public partial class StravaApiClient
         }
     }
 
-    public async Task<Activity> UpdateActivity(ActivityUpdateInfo updateInfo)
+    public async Task<Activity> UpdateActivity(ActivityUpdateInfo updateInfo, long athleteId, StravaApiAthleteAuthInfo? authInfo = null)
     {
-        HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
-
         var contents = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(updateInfo.Name))
             contents.Add("name", updateInfo.Name);
@@ -82,11 +67,13 @@ public partial class StravaApiClient
         if (updateInfo.Private.HasValue)
             contents.Add("private", updateInfo.Private.ToString().ToLower());
 
-        var formUrlEncodedContents = new FormUrlEncodedContent(contents);
+        authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
+
+        using var formUrlEncodedContents = new FormUrlEncodedContent(contents);
 
         try
         {
-            return await HttpClient.Put<Activity>($"activities/{updateInfo.ActivityId}", formUrlEncodedContents).ConfigureAwait(false);
+            return await StravaHttpClient.Put<Activity>($"{ApiPath}/activities/{updateInfo.ActivityId}", authInfo, formUrlEncodedContents).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -94,13 +81,13 @@ public partial class StravaApiClient
         }
     }
 
-    public async Task DeleteActivity(long activityId)
+    public async Task DeleteActivity(long activityId, long athleteId, StravaApiAthleteAuthInfo? authInfo = null)
     {
-        await CheckAuthenticationAndRefreshIfNeeded().ConfigureAwait(false);
+        authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
 
         try
         {
-            await HttpClient.Delete($"activities/{activityId}").ConfigureAwait(false);
+            await StravaHttpClient.Delete($"{ApiPath}/activities/{activityId}", authInfo).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

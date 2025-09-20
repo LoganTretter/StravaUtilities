@@ -1,16 +1,15 @@
-﻿namespace StravaUtilities.TestHarness.Tests;
+﻿using Microsoft.Extensions.Options;
 
-internal class AthleteTests(StravaApiClient stravaApiClient)
+namespace StravaUtilities.TestHarness.Tests;
+
+internal class AthleteTests(IOptions<StravaUtilitiesTestHarnessOptions> options, StravaApiClient stravaApiClient)
     : IStravaUtilitiesTest
 {
-    internal async Task Run()
-    {
-        await GetAthlete().ConfigureAwait(false);
-    }
+    private readonly StravaUtilitiesTestHarnessOptions _options = options.Value;
 
-    private async Task GetAthlete()
+    internal async Task GetAthlete()
     {
-        var athlete = await stravaApiClient.GetAthlete().ConfigureAwait(false);
+        var athlete = await stravaApiClient.GetAthlete(_options.AthleteId).ConfigureAwait(false);
 
         ;
     }

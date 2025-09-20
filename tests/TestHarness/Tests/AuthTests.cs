@@ -2,7 +2,7 @@
 
 namespace StravaUtilities.TestHarness.Tests;
 
-internal class AuthTests(IOptions<StravaUtilitiesTestHarnessOptions> options, StravaApiClient stravaApiClient, IStravaApiTokenStorer stravaApiTokenStorer)
+internal class AuthTests(IOptions<StravaUtilitiesTestHarnessOptions> options, StravaApiClient stravaApiClient, IStravaApiAthleteAuthInfoStorer stravaApiTokenStorer)
     : IStravaUtilitiesTest
 {
     private readonly StravaUtilitiesTestHarnessOptions _options = options.Value;
@@ -19,34 +19,38 @@ internal class AuthTests(IOptions<StravaUtilitiesTestHarnessOptions> options, St
 
     internal async Task ExchangeInitialAuthCodeForToken()
     {
-        await stravaApiClient.ExchangeInitialAuthCodeForToken("insert-code-here");
+        var exchangeTokenResponse = new ExchangeTokenInfo
+        {
+            AuthorizationCode = "insert-code-here",
+            Scopes = [Scope.Read, Scope.ReadAll, Scope.ProfileReadAll, Scope.ActivityRead, Scope.ActivityReadAll, Scope.ActivityWrite]
+        };
+
+        await stravaApiClient.ExchangeInitialAuthCodeForToken(exchangeTokenResponse);
     }
 
-    internal async Task ClientWithoutTokenOrStorerWillFail()
+    internal async Task ClientWithoutAuthInfoOrStorerWillFailWithoutProvidingAuthOnEachCall()
     {
-        // Here I'm assuming my token storer has a token
-        // Using the constructor that doesn't provide either a token or a storer, any subsequent call will fail
+        // Here I'm assuming my token storer has auth info for my athlete
+        // Using the constructor that doesn't provide a storer, any subsequent call will fail
 
         using var client = new StravaApiClient(_options.StravaApiClientId, _options.StravaApiClientSecret);
 
         try
         {
-            var athlete = await client.GetAthlete();
+            var athlete = await client.GetAthlete(_options.AthleteId);
         }
         catch (Exception ex)
         {
             ; // fails, expectedly
         }
 
-        // Now if I manually get the token (that I assume is in the store) and set it, subsequent calls succeed
+        // Now if I manually get the token (that I assume is in the store) and use it directly on the call, it should succeed
 
-        var existingToken = await stravaApiTokenStorer.GetToken();
-
-        client.SetAuthToken(existingToken);
+        var existingAuthInfo = await stravaApiTokenStorer.GetAthleteAuthInfo(_options.AthleteId);
 
         try
         {
-            var athlete = await client.GetAthlete();
+            var athlete = await client.GetAthlete(_options.AthleteId, existingAuthInfo);
             ; // should succeed
         }
         catch (Exception ex)
@@ -55,18 +59,16 @@ internal class AuthTests(IOptions<StravaUtilitiesTestHarnessOptions> options, St
         }
     }
 
-    internal async Task ClientWithTokenConstructorSucceeds()
+    internal async Task ClientWithStorerCanLookupAuthAndSucceed()
     {
-        // Here again I assume my token storer has a token
-        // Using the constructor that takes a token directly, subsequent calls succeed
+        // Here I'm assuming my token storer has auth info for my athlete
+        // Using the constructor that a storer, any subsequent call should make it look up the auth info
 
-        var existingToken = await stravaApiTokenStorer.GetToken();
-
-        using var client = new StravaApiClient(_options.StravaApiClientId, _options.StravaApiClientSecret, existingToken);
+        using var client = new StravaApiClient(_options.StravaApiClientId, _options.StravaApiClientSecret, stravaApiTokenStorer);
 
         try
         {
-            var athlete = await client.GetAthlete();
+            var athlete = await client.GetAthlete(_options.AthleteId);
             ; // should succeed
         }
         catch (Exception ex)

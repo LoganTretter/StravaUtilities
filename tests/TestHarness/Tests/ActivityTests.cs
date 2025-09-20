@@ -11,7 +11,7 @@ internal class ActivityTests(IOptions<StravaUtilitiesTestHarnessOptions> options
     {
         long activityId = _options.ActivityIdToGet;
 
-        var activity = await stravaApiClient.GetActivity(activityId).ConfigureAwait(false);
+        var activity = await stravaApiClient.GetActivity(activityId, _options.AthleteId).ConfigureAwait(false);
 
         ;
     }
@@ -22,7 +22,7 @@ internal class ActivityTests(IOptions<StravaUtilitiesTestHarnessOptions> options
         {
             long activityId = 0;
 
-            var activity = await stravaApiClient.GetActivity(activityId).ConfigureAwait(false);
+            var activity = await stravaApiClient.GetActivity(activityId, _options.AthleteId).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -32,14 +32,14 @@ internal class ActivityTests(IOptions<StravaUtilitiesTestHarnessOptions> options
 
     internal async Task GetActivitiesInPages()
     {
-        var firstTwoActivities = await stravaApiClient.GetActivities(pageSize: 2, pageNumber: 1).ConfigureAwait(false);
-        var secondTwoActivities = await stravaApiClient.GetActivities(pageSize: 2, pageNumber: 2).ConfigureAwait(false);
+        var firstTwoActivities = await stravaApiClient.GetActivities(_options.AthleteId, pageSize: 2, pageNumber: 1).ConfigureAwait(false);
+        var secondTwoActivities = await stravaApiClient.GetActivities(_options.AthleteId, pageSize: 2, pageNumber: 2).ConfigureAwait(false);
         ;
     }
 
     internal async Task UpdateActivity()
     {
-        var activityBefore = await stravaApiClient.GetActivity(_options.ActivityIdToUpdate).ConfigureAwait(false);
+        var activityBefore = await stravaApiClient.GetActivity(_options.ActivityIdToUpdate, _options.AthleteId).ConfigureAwait(false);
 
         var activityUpdateInfo = new ActivityUpdateInfo
         {
@@ -54,7 +54,7 @@ internal class ActivityTests(IOptions<StravaUtilitiesTestHarnessOptions> options
             SuppressFromFeed = true
         };
 
-        var activityAfter = await stravaApiClient.UpdateActivity(activityUpdateInfo).ConfigureAwait(false);
+        var activityAfter = await stravaApiClient.UpdateActivity(activityUpdateInfo, _options.AthleteId).ConfigureAwait(false);
 
         ;
     }

@@ -7,7 +7,7 @@ internal class SecretClientExtensionsTests(SecretClient secretClient)
 {
     internal async Task GetSecretThatExists()
     {
-        var secret = await secretClient.GetSecretValue<string>("StravaApiToken").ConfigureAwait(false);
+        var secret = await secretClient.GetSecretValue<string>($"StravaApiToken").ConfigureAwait(false);
         ;
     }
 
@@ -16,6 +16,19 @@ internal class SecretClientExtensionsTests(SecretClient secretClient)
         try
         {
             var secret = await secretClient.GetSecretValue<string>("DoesNotExist").ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            ;
+        }
+    }
+
+    internal async Task AddTestSecret()
+    {
+        try
+        {
+            await secretClient.SetSecretAsync("TestSecretName-123", $"TestSecretValue-2025-01-01T00:00:00.000Z");
+            ;
         }
         catch (Exception ex)
         {
