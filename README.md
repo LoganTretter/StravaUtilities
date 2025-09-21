@@ -32,3 +32,13 @@ There is a [test harnness](tests/TestHarness) project, just a console app, that 
 At this point there are no actual unit tests, because I mostly want to actually call the Strava API, in particular for uploading or updating activities. I want to "clean up" by test activities when I do this, so it's better suited for manual testing.
 
 Configure the test project for your Strava API app, athlete, activities, etc., using an ```appsettings.json``` file (see [appsettings_sample.json](tests/TestHarness/appsettings_sample.json) for an example).
+
+## TODO / Wish List
+
+- Write about usage
+- Write about the auth process
+- Integrate scope checks into the API calls
+- Add the rest of the Strava API calls and models into the library
+- Reorganize into models and api structure
+- Make the client thread safe
+- Improve error handling / more organization to exceptions
