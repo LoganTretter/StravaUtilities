@@ -61,7 +61,7 @@ public partial class StravaApiClient
             if (string.IsNullOrEmpty(currentTokenInfo.RefreshToken))
                 throw new StravaUtilitiesException("Authentication is expired and no refresh token is present to try refresh");
 
-            var newTokenInfo = await GetRefreshToken(currentTokenInfo.RefreshToken).ConfigureAwait(false);
+            var newTokenInfo = await GetNewTokenInfoFromRefreshToken(currentTokenInfo.RefreshToken).ConfigureAwait(false);
 
             if (!newTokenInfo.Equals(currentTokenInfo))
             {
@@ -74,15 +74,19 @@ public partial class StravaApiClient
     }
 
     /// <summary>
-    /// Gets new token info from a refresh token
+    /// <para>Gets new token info from a refresh token</para>
+    /// <para>If a new refresh token is issued, the old one is considered invalid</para>
     /// </summary>
     /// <param name="refreshToken"></param>
     /// <returns></returns>
     /// <exception cref="StravaUtilitiesException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<StravaApiTokenInfo> GetRefreshToken(string refreshToken)
+    public async Task<StravaApiTokenInfo> GetNewTokenInfoFromRefreshToken(string refreshToken)
     {
+        // Strava docs say the same token info may be returned if the existing access token does not expire for more than an hour
+        // Otherwise it will return new info
+
         ArgumentException.ThrowIfNullOrWhiteSpace(refreshToken);
 
         try
@@ -122,7 +126,8 @@ public partial class StravaApiClient
     }
 
     /// <summary>
-    /// Checks whether the token is expired
+    /// <para>Checks whether the token is expired</para>
+    /// <para>Always returns true if the token info does not specify an expiration time, it is indeterminate so it assumes expired</para>
     /// </summary>
     /// <param name="tokenInfo"></param>
     /// <returns></returns>
