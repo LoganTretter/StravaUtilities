@@ -37,18 +37,20 @@ public partial class StravaApiClient
         }
         else if (_stravaAthleteAuthInfoStorer != null)
         {
-            var tokenFromStorage = await TryGetAuthInfoFromStorage(athleteId).ConfigureAwait(false);
+            var authInfoFromStorage = await TryGetAuthInfoFromStorage(athleteId).ConfigureAwait(false);
             
-            if (tokenFromStorage == null)
+            if (authInfoFromStorage == null)
                 throw new StravaUtilitiesException($"No token is present, and one was not able to be fetched from the {nameof(IStravaApiAthleteAuthInfoStorer)}");
 
-            authInfo = tokenFromStorage;
+            authInfo = authInfoFromStorage;
 
             if (authInfo.TokenInfo == null)
                 throw new StravaUtilitiesException($"Auth info was fetched from the {nameof(IStravaApiAthleteAuthInfoStorer)}, but it does not include any {nameof(StravaApiAthleteAuthInfo.TokenInfo)}");
 
             if (string.IsNullOrEmpty(authInfo.TokenInfo.AccessToken))
                 throw new StravaUtilitiesException($"Auth info was fetched from the {nameof(IStravaApiAthleteAuthInfoStorer)}, but the {nameof(StravaApiTokenInfo.AccessToken)} was null or empty");
+
+            AuthInfoCache.Set(authInfo.AthleteId, authInfo);
         }
         else
         {
