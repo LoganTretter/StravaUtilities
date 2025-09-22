@@ -21,13 +21,13 @@ Standard tools:
 
 ## Usage
 
-Currently everything flows through the [StravaApiClient](src/StravaApiClient.cs) class.
+Currently everything flows through the [StravaApiClient](src/Api/StravaApiClient.cs) class.
 
 There is just one namespace, ```StravaUtilities```, to keep it simple / easy to use.
 
 ### With an auth storage provider (preferred)
 
-If you implement the [IStravaApiAthleteAuthInfoStorer](src/Auth/IStravaApiAthleteAuthInfoStorer.cs) interface and provide it to the client, then the client will manage authorization for any subsequent call.
+If you implement the [IStravaApiAthleteAuthInfoStorer](src/AuthHelpers/IStravaApiAthleteAuthInfoStorer.cs) interface and provide it to the client, then the client will manage authorization for any subsequent call.
 
 ```cs
 using StravaUtilities;
@@ -52,7 +52,7 @@ var athlete = await client.GetAthlete(athleteId);
 
 ### Without an auth storage provider
 
-Without a [IStravaApiAthleteAuthInfoStorer](src/Auth/IStravaApiAthleteAuthInfoStorer.cs) provided, you need to manually give auth info to each call.
+Without a [IStravaApiAthleteAuthInfoStorer](src/AuthHelpers/IStravaApiAthleteAuthInfoStorer.cs) provided, you need to manually give auth info to each call.
 
 ```cs
 using StravaUtilities;
@@ -151,12 +151,12 @@ The library has perfectly fine method to handle that last step of "exchanging" t
 
 But a C# _library_ isn't the greatest place to be handling the front end portions of this.
 
-Regardless, I built a sketchy way to do it in [AuthInitialApi](src/Auth/AuthInitialApi.cs) with a "[local server](src/Auth/LocalServer.cs)". It probably isn't production-worthy and obviously wouldn't work on a server, but it works for me to accomplish my needs:
+Regardless, I built a sketchy way to do it in [AuthInitialApi](src/Api/AuthInitialApi.cs) with a "[local server](src/AuthHelpers/LocalServer.cs)". It probably isn't production-worthy and obviously wouldn't work on a server, but it works for me to accomplish my needs:
 - Use [Process.Start](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.start) to open Strava's authorization url
   - This opens a browser tab, on my Windows PC anyway... Idk if it would work on other systems though.
 - Use an [HttpListener](https://learn.microsoft.com/en-us/dotnet/api/system.net.httplistener) to capture the redirect
 
-And if I did that with a [IStravaApiAthleteAuthInfoStorer](src/Auth/IStravaApiAthleteAuthInfoStorer.cs) provided, now I have stored the auth info for the athlete and it is ready for use.
+And if I did that with a [IStravaApiAthleteAuthInfoStorer](src/AuthHelpers/IStravaApiAthleteAuthInfoStorer.cs) provided, now I have stored the auth info for the athlete and it is ready for use.
 
 ### Auth on API calls
 
@@ -210,7 +210,7 @@ deactivate Something
 
 ```
 
-A little more specifically, when this library has a [IStravaApiAthleteAuthInfoStorer](src/Auth/IStravaApiAthleteAuthInfoStorer.cs) provided, the flow for any call to an instance of the api client is like so:
+A little more specifically, when this library has a [IStravaApiAthleteAuthInfoStorer](src/AuthHelpers/IStravaApiAthleteAuthInfoStorer.cs) provided, the flow for any call to an instance of the api client is like so:
 
 ```mermaid
 ---
@@ -288,6 +288,5 @@ Configure the test project for your Strava API app, athlete, activities, etc., u
 - Write more about usage
 - Integrate scope checks into the API calls
 - Add the rest of the Strava API calls and models into the library
-- Reorganize into models and api structure
 - Make the client thread safe
 - Improve error handling / more organization to exceptions
