@@ -12,4 +12,9 @@
     <PackageReference Include="Polly.Core" Version="8.6.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="Api\" />
+  </ItemGroup>
+
 </Project>

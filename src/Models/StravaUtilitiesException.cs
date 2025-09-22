@@ -1,4 +1,5 @@
 ﻿namespace StravaUtilities;
+
 public class StravaUtilitiesException : ApplicationException
 {
     internal StravaUtilitiesException(string message) : base(message) { }
