@@ -76,5 +76,9 @@ public enum ActivityType
 public enum WorkoutType
 {
     // TODO - figure out the rest of the types
+    UnknownValue = -2,
+    Default = -1,
+    Race = 1,
+    LongRun = 2,
     RunWorkout = 3
 }

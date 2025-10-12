@@ -6,8 +6,7 @@ public partial class StravaApiClient
     {
         authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
 
-        // TODO check if it just returns null if it doesn't exist, then maybe it should be a special error?
-        var activity = await StravaHttpClient.Get<Activity>($"{ApiPath}/activities /{activityId}", authInfo).ConfigureAwait(false);
+        var activity = await StravaHttpClient.Get<Activity>($"{ApiPath}/activities/{activityId}", authInfo).ConfigureAwait(false);
 
         return activity;
     }

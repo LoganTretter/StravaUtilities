@@ -116,8 +116,23 @@ public class Activity
     [JsonPropertyName("flagged")]
     public bool Flagged { get; set; }
 
-    //[JsonPropertyName("workout_type")]
-    //public int WorkoutType { get; set; } // TODO unsure what this means - is it an enum?
+    // I can't find a complete list of workout type enums
+    // So keeping a nullable raw property, then using a converter to handle unknowns
+    [JsonPropertyName("workout_type")]
+    public int? WorkoutTypeRaw { get; set; }
+    public WorkoutType WorkoutType
+    {
+        get
+        {
+            if (!WorkoutTypeRaw.HasValue)
+                return WorkoutType.Default;
+
+            if (!Enum.IsDefined(typeof(WorkoutType), WorkoutTypeRaw.Value))
+                return WorkoutType.UnknownValue;
+
+            return (WorkoutType)WorkoutTypeRaw.Value;
+        }
+    }
 
     [JsonPropertyName("upload_id_str")]
     public string UploadIdString { get; set; }
