@@ -1,10 +1,19 @@
 ﻿using System.Net.Mime;
-using System.Text.Json.Serialization;
+using System.Text;
 
 namespace StravaUtilities;
+
 public partial class StravaApiClient
 {
-    public async Task<ActivityUploadStatus> UploadActivity(ActivityUploadInfo uploadInfo, long athleteId, StravaApiAthleteAuthInfo? authInfo = null)
+    /// <summary>
+    /// Uploads an activity to Strava
+    /// </summary>
+    /// <param name="uploadInfo">Info about the upload</param>
+    /// <param name="athleteId">The id of the athlete to upload the activity for</param>
+    /// <param name="authInfo">Auth info for the athlete if already present</param>
+    /// <returns>The status of the upload</returns>
+    /// <exception cref="StravaUtilitiesException"></exception>
+    public async Task<ActivityUploadStatus> UploadActivity(ActivityUploadInput uploadInfo, long athleteId, StravaApiAthleteAuthInfo? authInfo = null)
     {
         string dataType = uploadInfo.SourceDataFormat switch
         {
@@ -23,26 +32,64 @@ public partial class StravaApiClient
             { "activity_type", uploadInfo.ActivityType.ToString() },
             { "name", uploadInfo.ActivityName },
             { "description", uploadInfo.Description },
-            { "private", uploadInfo.Private.ToString().ToLower() },
             { "trainer", uploadInfo.Trainer.ToString().ToLower() },
             { "commute", uploadInfo.Commute.ToString().ToLower() },
             { "external_id", uploadInfo.ExternalId },
-            { "device_name", uploadInfo.DeviceName }
-        };
 
+            // Doesn't seem to work, takes value from the file
+            //{ "device_name", uploadInfo.DeviceName },
+
+            // Doesn't work - need to send a follow-up update
+            //{ "hide_from_home", uploadInfo.SuppressFromFeed.ToString().ToLower() }
+        };
         if (uploadInfo.WorkoutType.HasValue)
             vals.Add("workout_type", ((int)uploadInfo.WorkoutType).ToString());
 
+        // Doesn't work - need to send a follow-up update
+        //if (!string.IsNullOrWhiteSpace(uploadInfo.GearId))
+        //    vals.Add("gear_id", uploadInfo.GearId);
+
+        byte[] fileBytes;
+        if (uploadInfo is IActivityUploadFromBytes uploadFromBytes)
+        {
+            fileBytes = uploadFromBytes.ActivityFileBytes;
+        }
+        else if (uploadInfo is IActivityUploadFromFile uploadFromFile)
+        {
+            try
+            {
+                fileBytes = await File.ReadAllBytesAsync(uploadFromFile.ActivityFilePath).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                string msg = "Failed to read activity file";
+                throw new StravaUtilitiesException(msg, innerException: ex);
+            }
+        }
+        else if (uploadInfo is IActivityUploadFromString uploadFromString)
+        {
+            try
+            {
+                fileBytes = Encoding.UTF8.GetBytes(uploadFromString.ActivityFileString);
+            }
+            catch (Exception ex)
+            {
+                string msg = "Failed to convert file string to byte array";
+                throw new StravaUtilitiesException(msg, innerException: ex);
+            }
+        }
+        else
+        {
+            throw new StravaUtilitiesException("Unsupported activity file source");
+        }
+
         using var content = new MultipartFormDataContent
         {
-            // Couldn't get this to work from the string directly, only from a file
-            //{ new ByteArrayContent(Encoding.UTF8.GetBytes(uploadInfo.ActivityFileString)), "file", uploadInfo.ExternalId}
-            { new ByteArrayContent(File.ReadAllBytes(uploadInfo.SourceFilePath)), "file", uploadInfo.ExternalId}
+            { new ByteArrayContent(fileBytes), "file", uploadInfo.ExternalId}
         };
+
         foreach (var (key, val) in vals)
-        {
             content.Add(new StringContent(val), key);
-        }
 
         authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
 
@@ -59,7 +106,17 @@ public partial class StravaApiClient
     }
 
     // TODO - a callback for updating a status indicator?
-    public async Task<ActivityUploadStatus> UploadActivityAndWaitForCompletion(ActivityUploadInfo uploadInfo, long athleteId, byte secondsToWait = 60, StravaApiAthleteAuthInfo? authInfo = null)
+    /// <summary>
+    /// Uploads an activity to Strava, and waits some time for it to complete (or error) before returning
+    /// </summary>
+    /// <param name="uploadInfo">Info about the upload</param>
+    /// <param name="athleteId">The id of the athlete to upload the activity for</param>
+    /// <param name="secondsToWait">How many seconds to wait for the upload to either finish or error</param>
+    /// <param name="authInfo">Auth info for the athlete if already present</param>
+    /// <returns>The status of the upload</returns>
+    /// <exception cref="StravaUtilitiesException"></exception>
+    /// <exception cref="NotImplementedException"></exception>
+    public async Task<ActivityUploadStatus> UploadActivityAndWaitForCompletion(ActivityUploadAndWaitInput uploadInfo, long athleteId, byte secondsToWait = 60, StravaApiAthleteAuthInfo? authInfo = null)
     {
         authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
 
@@ -85,7 +142,7 @@ public partial class StravaApiClient
 
                 await Task.Delay(millisecondsDelay: 1000).ConfigureAwait(false);
 
-                uploadStatus = await CheckUploadStatus(uploadStatus.Id, athleteId, authInfo).ConfigureAwait(false);
+                uploadStatus = await GetUploadStatus(uploadStatus.Id, athleteId, authInfo).ConfigureAwait(false);
             }
 
             switch (uploadStatus.CurrentStatus)
@@ -103,19 +160,17 @@ public partial class StravaApiClient
                     throw new NotImplementedException($"{nameof(CurrentUploadStatus)} of {uploadStatus.CurrentStatus} is not supported");
             }
 
-            // Some fields can't be provided in the initial upload so send them with an update
-            var updateInfo = new ActivityUpdateInfo
+            // Some fields can't be provided in the initial upload, so send them with an update
+            if (uploadInfo.SuppressFromFeed || !string.IsNullOrWhiteSpace(uploadInfo.GearId))
             {
-                ActivityId = uploadStatus.ActivityId.Value,
-                GearId = uploadInfo.GearId,
-                DeviceName = uploadInfo.DeviceName,
-                Trainer = uploadInfo.Trainer,
-                WorkoutType = uploadInfo.WorkoutType,
-                Effort = uploadInfo.Effort,
-                SuppressFromFeed = uploadInfo.SuppressFromFeed,
-                Private = uploadInfo.Private
-            };
-            await UpdateActivity(updateInfo, athleteId, authInfo).ConfigureAwait(false);
+                var updateInfo = new ActivityUpdateInfo
+                {
+                    ActivityId = uploadStatus.ActivityId!.Value,
+                    GearId = uploadInfo.GearId,
+                    SuppressFromFeed = uploadInfo.SuppressFromFeed
+                };
+                await UpdateActivity(updateInfo, athleteId, authInfo).ConfigureAwait(false);
+            }
 
             return uploadStatus;
         }
@@ -125,7 +180,15 @@ public partial class StravaApiClient
         }
     }
 
-    public async Task<ActivityUploadStatus> CheckUploadStatus(long uploadId, long athleteId, StravaApiAthleteAuthInfo? authInfo = null)
+    /// <summary>
+    /// Gets the status of an upload
+    /// </summary>
+    /// <param name="uploadId">The id the upload</param>
+    /// <param name="athleteId">The id of the athlete to upload the activity for</param>
+    /// <param name="authInfo">Auth info for the athlete if already present</param>
+    /// <returns></returns>
+    /// <exception cref="StravaUtilitiesException"></exception>
+    public async Task<ActivityUploadStatus> GetUploadStatus(long uploadId, long athleteId, StravaApiAthleteAuthInfo? authInfo = null)
     {
         authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
 
@@ -138,65 +201,4 @@ public partial class StravaApiClient
             throw new StravaUtilitiesException($"Error checking upload status for upload id {uploadId}:{Environment.NewLine}{ex.Message}", ex);
         }
     }
-}
-
-public class ActivityUploadStatus
-{
-    [JsonPropertyName("id")]
-    public long Id { get; set; }
-    [JsonPropertyName("external_id")]
-    public string ExternalId { get; set; }
-    [JsonPropertyName("error")]
-    public string ErrorMessage { get; set; }
-    [JsonPropertyName("status")]
-    public string Status { get; set; }
-    [JsonPropertyName("activity_id")]
-    public long? ActivityId { get; set; }
-
-    public CurrentUploadStatus CurrentStatus => Status switch
-    {
-        // They just send back these certain strings...
-        "Your activity is still being processed." => CurrentUploadStatus.Processing,
-        "The created activity has been deleted." => CurrentUploadStatus.Deleted,
-        "There was an error processing your activity." => CurrentUploadStatus.Error,
-        _ => CurrentUploadStatus.Ready,
-    };
-}
-
-public class ActivityUploadInfo
-{
-    public string ActivityFileString { get; set; }
-    public string SourceFilePath { get; set; }
-    public DataFormat SourceDataFormat { get; set; }
-    public string ActivityName { get; set; }
-    public string ExternalId { get; set; }
-    public ActivityType ActivityType { get; set; }
-    public string Description { get; set; }
-    public bool Private { get; set; }
-    public bool Trainer { get; set; }
-    public bool Commute { get; set; }
-    public WorkoutType? WorkoutType { get; set; } // TODO is this an enum? 3 for run workout is all I know
-    public int Effort { get; set; }
-    public string ActivityId { get; set; }
-    public string GearId { get; set; }
-    public string DeviceName { get; set; }
-    public bool SuppressFromFeed { get; set; }
-}
-
-public enum DataFormat
-{
-    Fit,
-    FitGZipped,
-    Tcx,
-    TcxGZipped,
-    Gpx,
-    GpxGZipped
-}
-
-public enum CurrentUploadStatus
-{
-    Processing,
-    Deleted,
-    Error,
-    Ready
 }

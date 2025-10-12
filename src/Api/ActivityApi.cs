@@ -49,23 +49,25 @@ public partial class StravaApiClient
             contents.Add("sport_type", updateInfo.SportType.ToString());
         if (!string.IsNullOrEmpty(updateInfo.GearId))
             contents.Add("gear_id", updateInfo.GearId);
-        if (!string.IsNullOrEmpty(updateInfo.DeviceName))
-            contents.Add("device_name", updateInfo.DeviceName);
         if (updateInfo.Trainer.HasValue)
             contents.Add("trainer", updateInfo.Trainer.ToString().ToLower());
         if (updateInfo.Commute.HasValue)
             contents.Add("commute", updateInfo.Commute.ToString().ToLower());
         if (updateInfo.WorkoutType.HasValue)
             contents.Add("workout_type", ((int)updateInfo.WorkoutType).ToString());
-        if (updateInfo.Effort.HasValue)
-            contents.Add("perceived_exertion", updateInfo.Effort.ToString()); // TODO this doesn't seem to work
-
-        // TODO workout flag, private notes?
 
         if (updateInfo.SuppressFromFeed == true) // This is an apparent api bug, like if you include it at all it hides it, rather than respect the value of true/false
             contents.Add("hide_from_home", "true");
-        if (updateInfo.Private.HasValue)
-            contents.Add("private", updateInfo.Private.ToString().ToLower());
+
+        // These don't seem to work unfortunately
+        //if (!string.IsNullOrEmpty(updateInfo.DeviceName))
+        //    contents.Add("device_name", updateInfo.DeviceName);
+        //if (updateInfo.Effort.HasValue)
+        //    contents.Add("perceived_exertion", updateInfo.Effort.ToString());
+
+        // It seems like setting private flag and private notes does not work through the API
+        //if (updateInfo.Private.HasValue)
+        //    contents.Add("private", updateInfo.Private.ToString().ToLower());
 
         authInfo ??= await GetAthleteAuthInfoAndRefreshIfNeeded(athleteId).ConfigureAwait(false);
 

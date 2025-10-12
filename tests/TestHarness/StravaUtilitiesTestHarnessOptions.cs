@@ -10,6 +10,8 @@ public class StravaUtilitiesTestHarnessOptions
 
     public required long AthleteId { get; set; }
 
+    public string? GearId { get; set; }
+
     public required string StravaApiClientId { get; set; }
     public required string StravaApiClientSecret { get; set; }
 }

@@ -47,7 +47,6 @@ internal class ActivityTests(IOptions<StravaUtilitiesTestHarnessOptions> options
             Name = $"Updated Name at {DateTime.UtcNow.ToString("O")}",
             Description = $"updated description at {DateTime.UtcNow.ToString("O")}",
             SportType = ActivityType.Run,
-            DeviceName = "Test Device",
             Trainer = false,
             Commute = false,
             WorkoutType = WorkoutType.RunWorkout,
