@@ -4,6 +4,8 @@ A library for making calls to the [Strava API](https://developers.strava.com/doc
 
 Mostly it contains an API client. But I am calling it "utilities" because I may add more complex functions to it than just a pure API client would have.
 
+_It currently does not cover the entire Strava API, just basic activity things._
+
 ## Prerequisites
 
 To call the API, you need to go through your "API application", kind of like your access policy to use the Strava API.
